@@ -17,6 +17,9 @@ grafana:
           - grafana.localhost
 
 prometheus:
+  prometheusSpec:
+    serviceMonitorNamespaceSelector: {}
+    namespaceSelector: {}
   ingress:
     enabled: true
     ingressClassName: nginx
