@@ -55,28 +55,28 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    #   - name: Checkout GitOps branch
-    #     uses: actions/checkout@v4
-    #     with:
-    #       ref: ${{ env.GITOPS_BRANCH }}
+      - name: Checkout GitOps branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GITOPS_BRANCH }}
 
-    #   - name: Update image tag in GitOps deployment
-    #     run: |
-    #       NEW_IMAGE="${REGISTRY}/${IMAGE_NAME}:${{ steps.vars.outputs.sha_tag }}"
-    #       echo "Updating image in ${DEPLOY_PATH} to: $NEW_IMAGE"
+      - name: Update image tag in GitOps deployment
+        run: |
+          NEW_IMAGE="${REGISTRY}/${IMAGE_NAME}:${{ steps.vars.outputs.sha_tag }}"
+          echo "Updating image in ${DEPLOY_PATH} to: $NEW_IMAGE"
 
-    #       sed -i "s|image: .*|image: ${NEW_IMAGE}|g" "${DEPLOY_PATH}"
+          sed -i "s|image: .*|image: ${NEW_IMAGE}|g" "${DEPLOY_PATH}"
 
-    #   - name: Commit and push changes
-    #     run: |
-    #       git config user.name "github-actions[bot]"
-    #       git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    #       git add "${DEPLOY_PATH}"
-    #       git commit -m "chore(gitops): update image to SHA ${{ steps.vars.outputs.sha_tag }}"
-    #       git push origin ${{ env.GITOPS_BRANCH }}
+          git add "${DEPLOY_PATH}"
+          git commit -m "chore(gitops): update image to SHA ${{ steps.vars.outputs.sha_tag }}"
+          git push origin ${{ env.GITOPS_BRANCH }}
 
-    #   - name: Summary
-    #     run: |
-    #       echo "Image pushed: ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_tag }}"
-    #       echo "GitOps manifest updated in branch: ${GITOPS_BRANCH}"
+      - name: Summary
+        run: |
+          echo "Image pushed: ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_tag }}"
+          echo "GitOps manifest updated in branch: ${GITOPS_BRANCH}"
