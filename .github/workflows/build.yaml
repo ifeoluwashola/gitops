@@ -52,6 +52,8 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
     #   - name: Checkout GitOps branch
     #     uses: actions/checkout@v4
