@@ -6,6 +6,6 @@ app = FastAPI()
 def root():
     return {
         "message": "Hello from DevFest GitOps Demo 🚀", 
-        "version": "v2",
+        "version": "v1",
         "environment": "production"
     }
