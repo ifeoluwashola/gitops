@@ -11,5 +11,9 @@ spec:
     matchLabels:
       app: demo
   endpoints:
-    - port: http
+    - interval: 15s
+      port: http
       path: /metrics
+  namespaceSelector:
+    matchNames:
+      - demo
