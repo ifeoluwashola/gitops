@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: demo
-          image: ghcr.io/ifeoluwashola/devfest-gitops-demo:latest
+          image: ghcr.io/ifeoluwashola/gitops:27ac96b
           ports:
             - containerPort: 8080
           readinessProbe:
