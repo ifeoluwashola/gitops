@@ -27,7 +27,6 @@ metadata:
   namespace: argocd
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   rules:
   - host: argocd.local
@@ -39,4 +38,4 @@ spec:
           service:
             name: argocd-server
             port:
-              number: 443
+              number: 80

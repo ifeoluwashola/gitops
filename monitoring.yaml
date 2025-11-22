@@ -11,10 +11,6 @@ grafana:
     paths:
       - /
     pathType: Prefix
-    tls:
-      - secretName: grafana-tls
-        hosts:
-          - grafana.localhost
 
 prometheus:
   prometheusSpec:
@@ -45,7 +41,3 @@ alertmanager:
     paths:
       - /
     pathType: Prefix
-    tls:
-      - secretName: alertmanager-tls
-        hosts:
-          - alertmanager.localhost

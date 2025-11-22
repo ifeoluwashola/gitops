@@ -41,7 +41,8 @@ argocd:
 		fi
 
 	@echo "🔐 Logging into ArgoCD"
-	argocd login --core
+	kubectl -n $(ARGO_NS) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode > /tmp/argocd_pass.txt
+	argocd login argocd.local --username admin --password $(shell cat /tmp/argocd_pass.txt) --insecure --grpc-web
 
 prometheus:
 	@echo "📈 Installing Prometheus Stack"
@@ -49,6 +50,10 @@ prometheus:
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	helm repo update
 	helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n $(PROM_STACK_NS) -f monitoring.yaml
+
+	@echo "Displaying Grafana admin password:"
+	kubectl get secret --namespace $(PROM_STACK_NS) -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
+
 app:
 	@echo "📦 Deploying the demo application via ArgoCD"
 	kubectl apply -f argo-app.yaml
