@@ -39,20 +39,40 @@ argocd:
 		else \
 			echo "✅ ArgoCD CLI is already installed."; \
 		fi
+	
+	@echo "🛑 Stopping any existing ArgoCD port-forward"
+	@pkill -f "kubectl port-forward svc/argocd-server" >/dev/null 2>&1 || true
 
-	@echo "🔐 Logging into ArgoCD"
+	@echo "🔌 Starting ArgoCD port-forward in background..."
+	(kubectl port-forward svc/argocd-server -n $(ARGO_NS) 8080:80 >/dev/null 2>&1 &)
+
+	@echo "🔐 Logging into ArgoCD..."
 	kubectl -n $(ARGO_NS) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode > /tmp/argocd_pass.txt
-	argocd login argocd.local --username admin --password $(shell cat /tmp/argocd_pass.txt) --insecure --grpc-web
+	argocd login localhost:8080 --username admin --password $(shell cat /tmp/argocd_pass.txt) --insecure
 
-prometheus:
+monitoring:
 	@echo "📈 Installing Prometheus Stack"
 	kubectl create namespace $(PROM_STACK_NS) --dry-run=client -o yaml | kubectl apply -f -
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	helm repo update
 	helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n $(PROM_STACK_NS) -f monitoring.yaml
 
-	@echo "Displaying Grafana admin password:"
+	@echo "⏳ Waiting for Grafana pod to be ready..."
+	kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=grafana -n $(PROM_STACK_NS) --timeout=300s
+
+	@echo "🔐 Grafana admin password:"
 	kubectl get secret --namespace $(PROM_STACK_NS) -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
+
+	@echo "🔎 Locating Grafana pod..."
+	$(eval GRAFANA_POD := $(shell kubectl get pods -n $(PROM_STACK_NS) -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}'))
+
+	@echo "🛑 Stopping any existing Grafana port-forward"
+	@pkill -f "kubectl port-forward pod/$(GRAFANA_POD)" >/dev/null 2>&1 || true
+
+	@echo "🚀 Port-forwarding Grafana to http://localhost:3000"
+	@kubectl port-forward pod/$(GRAFANA_POD) 3000:3000 -n $(PROM_STACK_NS) >/dev/null 2>&1 &
+
+	@echo "🎉 Grafana UI available at: http://localhost:3000"
 
 app:
 	@echo "📦 Deploying the demo application via ArgoCD"
