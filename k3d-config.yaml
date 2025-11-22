@@ -1,0 +1,49 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: demo-cluster
+
+# cluster topology
+servers: 2
+agents: 4
+
+# API server
+kubeAPI:
+  host: "127.0.0.1"
+  hostIP: "0.0.0.0"
+  hostPort: "6443"
+
+# persistent storage on host
+volumes:
+  - volume: /Users/mac/k3d-storage:/var/lib/rancher/k3s/storage@all
+
+# expose ingress ports on host
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+
+# options
+options:
+  k3d:
+    loadbalancer:
+      configOverrides:
+        - settings.workerConnections=2048
+  k3s:
+    extraArgs:
+      # disable Traefik so we can use NGINX instead
+      - arg: "--disable=traefik"
+        nodeFilters:
+          - server:*
+      # install nginx-ingress automatically after cluster boot
+      - arg: "--kube-apiserver-arg=enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
+        nodeFilters:
+          - server:0
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+  runtime:
+    hostPidMode: false
