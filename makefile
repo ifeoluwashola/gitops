@@ -64,15 +64,11 @@ monitoring:
 	@echo "🔐 Grafana admin password:"
 	kubectl get secret --namespace $(PROM_STACK_NS) -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
 
-	@echo "🔎 Locating Grafana pod..."
-	$(eval GRAFANA_POD := $(shell kubectl get pods -n $(PROM_STACK_NS) -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}'))
-
 	@echo "🛑 Stopping any existing Grafana port-forward"
-	@pkill -f "kubectl port-forward pod/$(GRAFANA_POD)" >/dev/null 2>&1 || true
+	@pkill -f "kubectl port-forward svc/monitoring-grafana" >/dev/null 2>&1 || true
 
 	@echo "🚀 Port-forwarding Grafana to http://localhost:3000"
-	@kubectl port-forward pod/$(GRAFANA_POD) 3000:3000 -n $(PROM_STACK_NS) >/dev/null 2>&1 &
-
+	(kubectl port-forward svc/monitoring-grafana 3000:80 -n $(PROM_STACK_NS) >/dev/null 2>&1 &)
 
 app:
 	@echo "📦 Deploying the demo application via ArgoCD"
