@@ -1,10 +1,11 @@
 CLUSTER_NAME ?= demo-cluster
 PROM_STACK_NS ?= monitoring
 ARGO_NS ?= argocd
+APP_NS ?= demo
 
-.PHONY: all cluster install ingress argocd prometheus app destroy
+.PHONY: all cluster install ingress argocd monitoring app destroy
 
-all: cluster ingress argocd prometheus app 
+all: cluster ingress argocd monitoring app 
 
 cluster:
 	@echo "🔎 Checking for existing k3d cluster: $(CLUSTER_NAME)..."
@@ -48,7 +49,7 @@ argocd:
 
 	@echo "🔐 Logging into ArgoCD..."
 	kubectl -n $(ARGO_NS) get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode > /tmp/argocd_pass.txt
-	argocd login localhost:8080 --username admin --password $(shell cat /tmp/argocd_pass.txt) --insecure
+	argocd login localhost:8080 --username admin --password $$(cat /tmp/argocd_pass.txt) --insecure
 
 monitoring:
 	@echo "📈 Installing Prometheus Stack"
@@ -72,11 +73,21 @@ monitoring:
 	@echo "🚀 Port-forwarding Grafana to http://localhost:3000"
 	@kubectl port-forward pod/$(GRAFANA_POD) 3000:3000 -n $(PROM_STACK_NS) >/dev/null 2>&1 &
 
-	@echo "🎉 Grafana UI available at: http://localhost:3000"
 
 app:
 	@echo "📦 Deploying the demo application via ArgoCD"
 	kubectl apply -f argo-app.yaml
+	kubectl wait --for=condition=Available deployment/demo -n $(APP_NS) --timeout=300s
+
+	@echo "🛑 Stopping any existing application port-forward"
+	@pkill -f "kubectl port-forward svc/$(APP_NS)" >/dev/null 2>&1 || true
+
+	@echo "🚀 Port-forwarding application to http://localhost:8090"
+	(kubectl port-forward svc/$(APP_NS) 8090:80 -n $(APP_NS) >/dev/null 2>&1 &)
+
+	@echo "🎉 Grafana UI available at: http://localhost:3000"
+	@echo "🎉 ArgoCD UI available at: http://localhost:8080"
+	@echo "🎉 Application UI available at: http://localhost:8090"
 
 destroy:
 	@echo "🧨 Deleting cluster"
