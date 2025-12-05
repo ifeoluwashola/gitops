@@ -72,6 +72,7 @@ monitoring:
 
 app:
 	@echo "📦 Deploying the demo application via ArgoCD"
+	kubectl create namespace $(APP_NS) --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f argo-app.yaml
 	kubectl wait --for=condition=Available deployment/demo -n $(APP_NS) --timeout=300s
 
